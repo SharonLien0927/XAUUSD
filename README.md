@@ -1,0 +1,2 @@
+# XAUUSD
+XAUUSD Trading Assistant
