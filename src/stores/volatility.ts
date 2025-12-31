@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+
+const STORAGE_KEY = 'volatility_store_data'
 
 export interface DailyVolatility {
   date: string
@@ -40,9 +42,24 @@ export const useVolatilityStore = defineStore('volatility', () => {
     return dates
   }
 
+  // 從 localStorage 讀取資料或使用預設值
+  const loadFromStorage = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        return JSON.parse(stored)
+      }
+    } catch (error) {
+      console.error('Failed to load data from localStorage:', error)
+    }
+    return null
+  }
+
+  const initialData = loadFromStorage()
+
   // 五日波幅數據
   const dailyVolatilities = ref<DailyVolatility[]>(
-    generateWorkingDays().map(date => ({
+    initialData?.dailyVolatilities || generateWorkingDays().map(date => ({
       date,
       highPoint: 0,
       lowPoint: 0
@@ -50,17 +67,17 @@ export const useVolatilityStore = defineStore('volatility', () => {
   )
 
   // 掛單範圍設置
-  const breakoutHigh = ref(0)
-  const breakoutLow = ref(0)
-  const moduleTemplate = ref('')
+  const breakoutHigh = ref(initialData?.breakoutHigh || 0)
+  const breakoutLow = ref(initialData?.breakoutLow || 0)
+  const moduleTemplate = ref(initialData?.moduleTemplate || '')
 
   // Sell Limit 設置
   const sellLimit = ref({
-    quantity: 0,
-    stopLoss: 0,
-    cost: 0,
-    price: 0,
-    takeProfit: 0
+    quantity: initialData?.sellLimit?.quantity || 0,
+    stopLoss: initialData?.sellLimit?.stopLoss || 0,
+    cost: initialData?.sellLimit?.cost || 0,
+    price: initialData?.sellLimit?.price || 0,
+    takeProfit: initialData?.sellLimit?.takeProfit || 0
   })
 
   // 計算平均波幅
@@ -108,6 +125,32 @@ export const useVolatilityStore = defineStore('volatility', () => {
     Object.assign(sellLimit.value, data)
   }
 
+  // 保存到 localStorage
+  const saveToStorage = () => {
+    const state: VolatilityState = {
+      dailyVolatilities: dailyVolatilities.value,
+      breakoutHigh: breakoutHigh.value,
+      breakoutLow: breakoutLow.value,
+      costRange: costRange.value,
+      moduleTemplate: moduleTemplate.value,
+      sellLimit: sellLimit.value
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch (error) {
+      console.error('Failed to save data to localStorage:', error)
+    }
+  }
+
+  // 監控所有狀態變化，自動保存
+  watch(
+    [dailyVolatilities, breakoutHigh, breakoutLow, moduleTemplate, sellLimit],
+    () => {
+      saveToStorage()
+    },
+    { deep: true }
+  )
+
   return {
     dailyVolatilities,
     breakoutHigh,
@@ -120,6 +163,7 @@ export const useVolatilityStore = defineStore('volatility', () => {
     calculateTakeProfit,
     updateDate,
     updateVolatility,
-    updateSellLimit
+    updateSellLimit,
+    saveToStorage
   }
 })
