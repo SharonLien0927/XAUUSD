@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
+import { db } from '@/firebase'
+import { doc, setDoc, getDoc, onSnapshot, Timestamp } from 'firebase/firestore'
 
 const STORAGE_KEY = 'volatility_store_data'
+const FIREBASE_DOC_ID = 'user_data' // 用戶資料文件 ID
 
 export interface DailyVolatility {
   date: string
@@ -142,11 +145,84 @@ export const useVolatilityStore = defineStore('volatility', () => {
     }
   }
 
-  // 監控所有狀態變化，自動保存
+  // 保存到 Firebase
+  const saveToFirebase = async () => {
+    try {
+      const state: VolatilityState = {
+        dailyVolatilities: dailyVolatilities.value,
+        breakoutHigh: breakoutHigh.value,
+        breakoutLow: breakoutLow.value,
+        costRange: costRange.value,
+        moduleTemplate: moduleTemplate.value,
+        sellLimit: sellLimit.value
+      }
+      
+      const userDocRef = doc(db, 'users', FIREBASE_DOC_ID)
+      await setDoc(userDocRef, {
+        ...state,
+        updatedAt: Timestamp.now()
+      }, { merge: true })
+    } catch (error) {
+      console.error('Failed to save data to Firebase:', error)
+    }
+  }
+
+  // 從 Firebase 加載資料
+  const loadFromFirebase = async () => {
+    try {
+      const userDocRef = doc(db, 'users', FIREBASE_DOC_ID)
+      const docSnap = await getDoc(userDocRef)
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        dailyVolatilities.value = data.dailyVolatilities || dailyVolatilities.value
+        breakoutHigh.value = data.breakoutHigh || 0
+        breakoutLow.value = data.breakoutLow || 0
+        moduleTemplate.value = data.moduleTemplate || ''
+        if (data.sellLimit) {
+          sellLimit.value = { ...sellLimit.value, ...data.sellLimit }
+        }
+        return true
+      }
+    } catch (error) {
+      console.error('Failed to load data from Firebase:', error)
+    }
+    return false
+  }
+
+  // 監聽 Firebase 實時更新（用於多裝置同步）
+  const startFirebaseListener = () => {
+    try {
+      const userDocRef = doc(db, 'users', FIREBASE_DOC_ID)
+      onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data()
+          // 只有當本地沒在編輯時才更新（避免衝突）
+          if (!isLocalEditing.value) {
+            dailyVolatilities.value = data.dailyVolatilities || dailyVolatilities.value
+            breakoutHigh.value = data.breakoutHigh || 0
+            breakoutLow.value = data.breakoutLow || 0
+            moduleTemplate.value = data.moduleTemplate || ''
+            if (data.sellLimit) {
+              sellLimit.value = { ...sellLimit.value, ...data.sellLimit }
+            }
+          }
+        }
+      })
+    } catch (error) {
+      console.error('Failed to start Firebase listener:', error)
+    }
+  }
+
+  // 標記是否正在本地編輯
+  const isLocalEditing = ref(false)
+
+  // 監控所有狀態變化，自動保存到 localStorage 和 Firebase
   watch(
     [dailyVolatilities, breakoutHigh, breakoutLow, moduleTemplate, sellLimit],
-    () => {
+    async () => {
       saveToStorage()
+      await saveToFirebase()
     },
     { deep: true }
   )
@@ -164,6 +240,10 @@ export const useVolatilityStore = defineStore('volatility', () => {
     updateDate,
     updateVolatility,
     updateSellLimit,
-    saveToStorage
+    saveToStorage,
+    saveToFirebase,
+    loadFromFirebase,
+    startFirebaseListener,
+    isLocalEditing
   }
 })
