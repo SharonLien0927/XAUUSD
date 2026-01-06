@@ -407,8 +407,38 @@ function closeModal() {
 }
 
 function addStrategy() {
+  // 驗證邏輯
+  const validationErrors: string[] = []
+
   if (!newStrategy.value.date) {
-    alert('請選擇日期')
+    validationErrors.push('❌ 請選擇日期')
+  }
+
+  // 規則 1: 突破口高點必須大於突破口低點
+  if (newStrategy.value.breakoutHigh !== 0 && newStrategy.value.breakoutLow !== 0) {
+    if (newStrategy.value.breakoutHigh <= newStrategy.value.breakoutLow) {
+      validationErrors.push('❌ 突破口高點必須大於突破口低點！')
+    }
+  }
+
+  // 規則 2: 美盤回調點必須在突破口高低點區間內
+  if (newStrategy.value.points !== 0 && newStrategy.value.breakoutHigh !== 0 && newStrategy.value.breakoutLow !== 0) {
+    if (newStrategy.value.usRetrace === '高') {
+      // 美盤回調高點應該在低點和高點之間
+      if (newStrategy.value.points >= newStrategy.value.breakoutHigh || newStrategy.value.points <= newStrategy.value.breakoutLow) {
+        validationErrors.push(`❌ 美盤回調點（${newStrategy.value.points}）必須在突破口低點（${newStrategy.value.breakoutLow}）和高點（${newStrategy.value.breakoutHigh}）之間！`)
+      }
+    } else if (newStrategy.value.usRetrace === '低') {
+      // 美盤回調低點也應該在低點和高點之間
+      if (newStrategy.value.points >= newStrategy.value.breakoutHigh || newStrategy.value.points <= newStrategy.value.breakoutLow) {
+        validationErrors.push(`❌ 美盤回調點（${newStrategy.value.points}）必須在突破口低點（${newStrategy.value.breakoutLow}）和高點（${newStrategy.value.breakoutHigh}）之間！`)
+      }
+    }
+  }
+
+  // 如果有錯誤，顯示提示
+  if (validationErrors.length > 0) {
+    alert(validationErrors.join('\n'))
     return
   }
 
