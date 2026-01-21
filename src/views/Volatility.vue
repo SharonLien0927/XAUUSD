@@ -1,8 +1,8 @@
 <template>
   <div>
-    <!-- 五日平均波幅 -->
+    <!-- 平均波幅 -->
     <div class="card">
-      <div class="card-title">五日平均波幅</div>
+      <div class="card-title">平均波幅</div>
       
       <!-- 五天的波幅輸入 -->
       <div class="volatility-row-header">
@@ -54,6 +54,33 @@
           <span class="data-label">成本&領域範圍 (10%)</span>
           <span class="data-value highlight">
             {{ volatilityStore.costRange.toFixed(2) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 單日波幅選擇 -->
+      <div class="data-row highlight" style="margin-top: 12px;">
+        <div class="form-group" style="flex: 1;">
+          <label style="display: block; margin-bottom: 8px; font-size: 14px;">單日波幅</label>
+          <select 
+            v-model="selectedDayIndex"
+            class="form-input"
+            style="width: 100%;"
+          >
+            <option value="" disabled>選擇一天的資料</option>
+            <option 
+              v-for="(day, index) in volatilityStore.dailyVolatilities" 
+              :key="index"
+              :value="index"
+            >
+              {{ day.date }} - 波幅: {{ (day.highPoint - day.lowPoint).toFixed(2) }}
+            </option>
+          </select>
+        </div>
+        <div class="data-item" style="margin-left: 12px;">
+          <span class="data-label">波幅值</span>
+          <span class="data-value highlight">
+            {{ selectedDayIndex !== '' ? (volatilityStore.dailyVolatilities[parseInt(selectedDayIndex)].highPoint - volatilityStore.dailyVolatilities[parseInt(selectedDayIndex)].lowPoint).toFixed(2) : '0.00' }}
           </span>
         </div>
       </div>
@@ -242,6 +269,9 @@ import { ref, reactive, watch, computed } from 'vue'
 import { useVolatilityStore } from '../stores/volatility'
 
 const volatilityStore = useVolatilityStore()
+
+// 單日波幅選擇
+const selectedDayIndex = ref('')
 
 const sellLimit = reactive({
   quantity: 0,

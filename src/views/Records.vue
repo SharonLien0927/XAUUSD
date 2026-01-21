@@ -332,7 +332,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { db } from '@/firebase'
+import { doc, setDoc, getDoc, onSnapshot, Timestamp } from 'firebase/firestore'
 
 interface Record {
   timestamp: string
@@ -342,6 +344,9 @@ interface Record {
   profitLoss: string
   notes: string
 }
+
+const RECORDS_KEY = 'xauusd_records'
+const FIREBASE_RECORDS_DOC = 'records'
 
 const records = ref<Record[]>(loadRecordsFromStorage())
 const selectedRecordIndex = ref<number | null>(null)
@@ -368,6 +373,19 @@ const editRecord = ref({
   quantity: 0,
   profitLoss: 0,
   notes: ''
+})
+
+// 組件掛載時初始化 Firebase
+onMounted(async () => {
+  // 嘗試從 Firebase 加載資料
+  const loaded = await loadRecordsFromFirebase()
+  if (loaded) {
+    console.log('✓ Records loaded from Firebase on mount')
+    // 啟動實時監聽器進行多裝置同步
+    startFirebaseListener()
+  } else {
+    console.log('⚠ No Firebase records found, using localStorage')
+  }
 })
 
 const totalProfitLoss = computed(() => {
@@ -830,11 +848,66 @@ function generateRecordsHTML(recordsToExport: Record[]): string {
 }
 
 function saveRecordsToStorage() {
-  localStorage.setItem('xauusd_records', JSON.stringify(records.value))
+  // 保存到 localStorage
+  localStorage.setItem(RECORDS_KEY, JSON.stringify(records.value))
+  
+  // 保存到 Firebase
+  saveRecordsToFirebase()
+}
+
+async function saveRecordsToFirebase() {
+  try {
+    const recordsDocRef = doc(db, 'users', FIREBASE_RECORDS_DOC)
+    await setDoc(recordsDocRef, {
+      data: records.value,
+      updatedAt: Timestamp.now()
+    }, { merge: true })
+    console.log('✓ Records saved to Firebase')
+  } catch (error) {
+    console.error('Failed to save records to Firebase:', error)
+  }
+}
+
+async function loadRecordsFromFirebase() {
+  try {
+    const recordsDocRef = doc(db, 'users', FIREBASE_RECORDS_DOC)
+    const docSnap = await getDoc(recordsDocRef)
+    
+    if (docSnap.exists() && docSnap.data().data) {
+      const firebaseRecords = docSnap.data().data
+      records.value = firebaseRecords
+      // 也更新 localStorage
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(firebaseRecords))
+      console.log('✓ Records loaded from Firebase')
+      return true
+    }
+  } catch (error) {
+    console.error('Failed to load records from Firebase:', error)
+  }
+  return false
+}
+
+function startFirebaseListener() {
+  try {
+    const recordsDocRef = doc(db, 'users', FIREBASE_RECORDS_DOC)
+    onSnapshot(recordsDocRef, (docSnap) => {
+      if (docSnap.exists() && docSnap.data().data) {
+        const firebaseRecords = docSnap.data().data
+        // 只有當本地沒在編輯時才更新
+        if (!showModal.value && !showEditModal.value) {
+          records.value = firebaseRecords
+          localStorage.setItem(RECORDS_KEY, JSON.stringify(firebaseRecords))
+          console.log('✓ Records synced from Firebase')
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Failed to start Firebase listener:', error)
+  }
 }
 
 function loadRecordsFromStorage(): Record[] {
-  const stored = localStorage.getItem('xauusd_records')
+  const stored = localStorage.getItem(RECORDS_KEY)
   return stored ? JSON.parse(stored) : []
 }
 </script>

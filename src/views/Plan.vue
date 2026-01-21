@@ -341,7 +341,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { db } from '@/firebase'
+import { doc, setDoc, getDoc, onSnapshot, Timestamp } from 'firebase/firestore'
 
 interface Strategy {
   date: string
@@ -353,6 +355,9 @@ interface Strategy {
   description: string
   createdAt: string
 }
+
+const STRATEGIES_KEY = 'xauusd_strategies'
+const FIREBASE_STRATEGIES_DOC = 'strategies'
 
 const strategies = ref<Strategy[]>(loadStrategiesFromStorage())
 const selectedStrategyIndex = ref<number | null>(null)
@@ -381,6 +386,19 @@ const editStrategy = ref({
   points: 0,
   module: '',
   description: ''
+})
+
+// 組件掛載時初始化 Firebase
+onMounted(async () => {
+  // 嘗試從 Firebase 加載資料
+  const loaded = await loadStrategiesFromFirebase()
+  if (loaded) {
+    console.log('✓ Strategies loaded from Firebase on mount')
+    // 啟動實時監聽器進行多裝置同步
+    startFirebaseListener()
+  } else {
+    console.log('⚠ No Firebase strategies found, using localStorage')
+  }
 })
 
 function getWeekday(dateStr: string): string {
@@ -738,12 +756,69 @@ function generateHTML(strategies: Strategy[]): string {
     </body>
     </html>
   `
-}function saveStrategiesFromStorage() {
-  localStorage.setItem('xauusd_strategies', JSON.stringify(strategies.value))
+}
+
+function saveStrategiesFromStorage() {
+  // 保存到 localStorage
+  localStorage.setItem(STRATEGIES_KEY, JSON.stringify(strategies.value))
+  
+  // 保存到 Firebase
+  saveStrategiesToFirebase()
+}
+
+async function saveStrategiesToFirebase() {
+  try {
+    const strategiesDocRef = doc(db, 'users', FIREBASE_STRATEGIES_DOC)
+    await setDoc(strategiesDocRef, {
+      data: strategies.value,
+      updatedAt: Timestamp.now()
+    }, { merge: true })
+    console.log('✓ Strategies saved to Firebase')
+  } catch (error) {
+    console.error('Failed to save strategies to Firebase:', error)
+  }
+}
+
+async function loadStrategiesFromFirebase() {
+  try {
+    const strategiesDocRef = doc(db, 'users', FIREBASE_STRATEGIES_DOC)
+    const docSnap = await getDoc(strategiesDocRef)
+    
+    if (docSnap.exists() && docSnap.data().data) {
+      const firebaseStrategies = docSnap.data().data
+      strategies.value = firebaseStrategies
+      // 也更新 localStorage
+      localStorage.setItem(STRATEGIES_KEY, JSON.stringify(firebaseStrategies))
+      console.log('✓ Strategies loaded from Firebase')
+      return true
+    }
+  } catch (error) {
+    console.error('Failed to load strategies from Firebase:', error)
+  }
+  return false
+}
+
+function startFirebaseListener() {
+  try {
+    const strategiesDocRef = doc(db, 'users', FIREBASE_STRATEGIES_DOC)
+    onSnapshot(strategiesDocRef, (docSnap) => {
+      if (docSnap.exists() && docSnap.data().data) {
+        const firebaseStrategies = docSnap.data().data
+        // 只有當本地沒在編輯時才更新
+        if (!showModal.value && !showEditModal.value) {
+          strategies.value = firebaseStrategies
+          localStorage.setItem(STRATEGIES_KEY, JSON.stringify(firebaseStrategies))
+          console.log('✓ Strategies synced from Firebase')
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Failed to start Firebase listener:', error)
+  }
 }
 
 function loadStrategiesFromStorage(): Strategy[] {
-  const stored = localStorage.getItem('xauusd_strategies')
+  const stored = localStorage.getItem(STRATEGIES_KEY)
   return stored ? JSON.parse(stored) : []
 }
 
