@@ -893,12 +893,10 @@ function startFirebaseListener() {
     onSnapshot(recordsDocRef, (docSnap) => {
       if (docSnap.exists() && docSnap.data().data) {
         const firebaseRecords = docSnap.data().data
-        // 只有當本地沒在編輯時才更新
-        if (!showModal.value && !showEditModal.value) {
-          records.value = firebaseRecords
-          localStorage.setItem(RECORDS_KEY, JSON.stringify(firebaseRecords))
-          console.log('✓ Records synced from Firebase')
-        }
+        // 實時同步，不檢查編輯狀態
+        records.value = firebaseRecords
+        localStorage.setItem(RECORDS_KEY, JSON.stringify(firebaseRecords))
+        console.log('✓ Records synced from Firebase')
       }
     })
   } catch (error) {

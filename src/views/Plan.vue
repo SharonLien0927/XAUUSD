@@ -804,12 +804,10 @@ function startFirebaseListener() {
     onSnapshot(strategiesDocRef, (docSnap) => {
       if (docSnap.exists() && docSnap.data().data) {
         const firebaseStrategies = docSnap.data().data
-        // 只有當本地沒在編輯時才更新
-        if (!showModal.value && !showEditModal.value) {
-          strategies.value = firebaseStrategies
-          localStorage.setItem(STRATEGIES_KEY, JSON.stringify(firebaseStrategies))
-          console.log('✓ Strategies synced from Firebase')
-        }
+        // 實時同步，不檢查編輯狀態
+        strategies.value = firebaseStrategies
+        localStorage.setItem(STRATEGIES_KEY, JSON.stringify(firebaseStrategies))
+        console.log('✓ Strategies synced from Firebase')
       }
     })
   } catch (error) {

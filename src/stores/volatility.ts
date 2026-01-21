@@ -217,12 +217,13 @@ export const useVolatilityStore = defineStore('volatility', () => {
   // 標記是否正在本地編輯
   const isLocalEditing = ref(false)
 
-  // 監控所有狀態變化，自動保存到 localStorage（不自動保存到 Firebase）
+  // 監控所有狀態變化，自動保存到 localStorage 和 Firebase
   watch(
     [dailyVolatilities, breakoutHigh, breakoutLow, moduleTemplate, sellLimit],
     async () => {
       saveToStorage()
-      // 注意：Firebase 的保存應該由「策略」和「紀錄」分頁主動調用，而不是自動同步
+      // 自動保存到 Firebase
+      await saveToFirebase()
     },
     { deep: true }
   )

@@ -7,22 +7,27 @@ import { useVolatilityStore } from './stores/volatility'
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
-
-// 應用啟動時加載 Firebase 資料
 app.mount('#app')
 
 const store = useVolatilityStore()
 
-// 嘗試從 Firebase 加載資料，如果失敗則使用 localStorage
+// 應用啟動時初始化 Firebase 同步
+console.log('🚀 Initializing Firebase sync...')
+
+// 嘗試從 Firebase 加載計算數據
 store.loadFromFirebase().then((loaded) => {
   if (loaded) {
-    console.log('✓ Data loaded from Firebase')
-    // 啟動實時監聽器進行多裝置同步
-    store.startFirebaseListener()
+    console.log('✓ Volatility data loaded from Firebase')
   } else {
-    console.log('⚠ No Firebase data found, using localStorage')
+    console.log('ℹ Using localStorage for volatility data')
   }
+  
+  // 無論如何都啟動監聽器進行實時同步
+  store.startFirebaseListener()
+  console.log('✓ Firebase listener started for volatility data')
 }).catch((error) => {
-  console.error('Firebase loading failed:', error)
+  console.error('⚠ Firebase initialization error:', error)
+  // 繼續使用 localStorage，即使 Firebase 失敗
+  store.startFirebaseListener()
 })
 
