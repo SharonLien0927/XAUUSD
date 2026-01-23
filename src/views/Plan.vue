@@ -120,9 +120,9 @@
           </div>
         </div>
         <div class="data-row">
-          <div class="data-item" style="flex-direction: column; align-items: flex-start;">
+          <div class="data-item" style="flex-direction: column; align-items: flex-start; width: 100%; grid-column: 1 / -1;">
             <span class="data-label">策略</span>
-            <span class="data-value" style="white-space: pre-wrap; margin-top: 8px;">{{ strategies[selectedStrategyIndex].description }}</span>
+            <span class="data-value" style="white-space: pre-wrap; margin-top: 8px; width: 100%; word-break: break-word;">{{ strategies[selectedStrategyIndex].description }}</span>
           </div>
         </div>
       </div>
