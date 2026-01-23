@@ -49,6 +49,8 @@ body,
 #app {
   width: 100%;
   height: 100%;
+  /* 防止虛擬鍵盤導致的抖動 */
+  overflow: hidden;
 }
 
 /* ========== 主容器 ========== */
@@ -188,6 +190,24 @@ body,
   font-size: 13px;
   transition: all 0.3s ease;
   box-shadow: var(--shadow-inset);
+  /* 手機輸入框穩定性改進 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  font-size: 16px;
+}
+
+/* 移除 iOS 數字輸入框預設樣式 */
+input[type="number"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .form-input:focus,
@@ -196,6 +216,9 @@ body,
   border-color: var(--color-gold);
   background-color: var(--color-bg-tertiary);
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1), var(--shadow-inset);
+  /* 手機端保持穩定 */
+  position: relative;
+  z-index: 10;
 }
 /* ========== 表格 ========== */
 

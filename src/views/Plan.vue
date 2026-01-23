@@ -155,6 +155,7 @@
               <input 
                 v-model.number="newStrategy.breakoutHigh"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如：2700"
@@ -165,6 +166,7 @@
               <input 
                 v-model.number="newStrategy.breakoutLow"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如：2650"
@@ -198,6 +200,7 @@
               <input 
                 v-model.number="newStrategy.points"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如：50"
@@ -260,6 +263,7 @@
               <input 
                 v-model.number="editStrategy.breakoutHigh"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如：2700"
@@ -270,6 +274,7 @@
               <input 
                 v-model.number="editStrategy.breakoutLow"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如：2650"
@@ -303,6 +308,7 @@
               <input 
                 v-model.number="editStrategy.points"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如：50"

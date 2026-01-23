@@ -24,6 +24,7 @@
           <input 
             v-model.number="day.highPoint"
             type="number"
+            inputmode="decimal"
             step="0.01"
             class="form-input"
             @input="volatilityStore.updateVolatility(volatilityStore.dailyVolatilities.indexOf(day), day.highPoint, day.lowPoint)"
@@ -34,6 +35,7 @@
           <input 
             v-model.number="day.lowPoint"
             type="number"
+            inputmode="decimal"
             step="0.01"
             class="form-input"
             @input="volatilityStore.updateVolatility(volatilityStore.dailyVolatilities.indexOf(day), day.highPoint, day.lowPoint)"
@@ -91,32 +93,35 @@
       <div class="card-title">掛單範圍</div>
 
       <!-- 突破口和成本設置 -->
-      <div class="grid-3">
-        <div class="form-group">
-          <label>突破口高點(or 美盤回調高點)</label>
-          <input 
-            v-model.number="volatilityStore.breakoutHigh"
-            type="number"
-            step="0.01"
-            class="form-input"
-            placeholder="輸入價格"
-          />
-        </div>
-        <div class="form-group">
-          <label>突破口低點(or 美盤回調低點)</label>
-          <input 
-            v-model.number="volatilityStore.breakoutLow"
-            type="number"
-            step="0.01"
-            class="form-input"
-            placeholder="輸入價格"
-          />
-        </div>
-        <div class="form-group">
-          <label>成本&領域範圍</label>
-          <input 
-            v-model.number="sellLimit.costDisplay"
-            type="number"
+<div class="grid-3" style="margin-bottom: 12px;">
+          <div class="form-group">
+            <label>突破口高點(or 美盤回調高點)</label>
+            <input 
+              v-model.number="volatilityStore.breakoutHigh"
+              type="number"
+              inputmode="decimal"
+              step="0.01"
+              class="form-input"
+              placeholder="輸入價格"
+            />
+          </div>
+          <div class="form-group">
+            <label>突破口低點(or 美盤回調低點)</label>
+            <input 
+              v-model.number="volatilityStore.breakoutLow"
+              type="number"
+              inputmode="decimal"
+              step="0.01"
+              class="form-input"
+              placeholder="輸入價格"
+            />
+          </div>
+          <div class="form-group">
+            <label>成本&領域範圍</label>
+            <input 
+              v-model.number="sellLimit.costDisplay"
+              type="number"
+              inputmode="decimal"
             step="0.01"
             class="form-input"
             placeholder="自動計算或手動輸入"
@@ -147,6 +152,7 @@
             <input 
               v-model.number="sellLimit.quantity"
               type="number"
+              inputmode="decimal"
               step="0.01"
               class="form-input"
               placeholder="0.01"
@@ -158,6 +164,7 @@
             <input 
               v-model.number="sellLimit.cost"
               type="number"
+              inputmode="decimal"
               step="0.01"
               class="form-input"
               placeholder="例如 5"
@@ -210,6 +217,7 @@
             <input 
               v-model.number="buyLimit.quantity"
               type="number"
+              inputmode="decimal"
               step="0.01"
               class="form-input"
               placeholder="0.01"
@@ -221,6 +229,7 @@
             <input 
               v-model.number="buyLimit.cost"
               type="number"
+              inputmode="decimal"
               step="0.01"
               class="form-input"
               placeholder="例如 5"

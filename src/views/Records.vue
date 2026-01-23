@@ -143,6 +143,7 @@
               <input 
                 v-model.number="newRecord.price"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如 4200.50"
@@ -153,6 +154,7 @@
               <input 
                 v-model.number="newRecord.quantity"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如 0.01"
@@ -165,6 +167,7 @@
             <input 
               v-model.number="newRecord.profitLoss"
               type="number"
+              inputmode="decimal"
               step="0.01"
               class="form-input"
               placeholder="例如 50.00 或 -10.00"
@@ -223,6 +226,7 @@
               <input 
                 v-model.number="editRecord.price"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如 4200.50"
@@ -233,6 +237,7 @@
               <input 
                 v-model.number="editRecord.quantity"
                 type="number"
+                inputmode="decimal"
                 step="0.01"
                 class="form-input"
                 placeholder="例如 0.01"
@@ -245,6 +250,7 @@
             <input 
               v-model.number="editRecord.profitLoss"
               type="number"
+              inputmode="decimal"
               step="0.01"
               class="form-input"
               placeholder="例如 50.00 或 -10.00"
