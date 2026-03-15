@@ -27,7 +27,7 @@
             inputmode="decimal"
             step="0.01"
             class="form-input"
-            @input="volatilityStore.updateVolatility(volatilityStore.dailyVolatilities.indexOf(day), day.highPoint, day.lowPoint)"
+            @input="volatilityStore.updateVolatility(index, day.highPoint, day.lowPoint)"
             placeholder="0"
           />
         </div>
@@ -38,7 +38,7 @@
             inputmode="decimal"
             step="0.01"
             class="form-input"
-            @input="volatilityStore.updateVolatility(volatilityStore.dailyVolatilities.indexOf(day), day.highPoint, day.lowPoint)"
+            @input="volatilityStore.updateVolatility(index, day.highPoint, day.lowPoint)"
             placeholder="0"
           />
         </div>
