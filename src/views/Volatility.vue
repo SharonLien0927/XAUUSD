@@ -88,6 +88,220 @@
       </div>
     </div>
 
+    <!-- 策略分析 -->
+    <div class="card">
+      <div class="card-title">策略分析</div>
+
+      <!-- 一、波幅、領域與成本 -->
+      <div style="margin-bottom: 24px;">
+        <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">一、波幅、領域與成本</div>
+        
+        <!-- 單日波幅選擇 -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>單日波幅選擇</label>
+          <select v-model="strategy.singleDayIndex" class="form-input" @change="updateStrategyData">
+            <option value="" disabled>選擇一天</option>
+            <option v-for="(day, index) in volatilityStore.dailyVolatilities" :key="index" :value="index">
+              {{ formatDateShort(day.date) }} - {{ (day.highPoint - day.lowPoint).toFixed(2) }}
+            </option>
+          </select>
+        </div>
+
+        <!-- 單日波幅顯示 -->
+        <div class="data-row" style="margin-bottom: 12px;">
+          <div class="data-item">
+            <span class="data-label">單日波幅</span>
+            <span class="data-value">{{ roundCustom(strategy.singleDayVolatility) }}U</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">5日均波幅(5Avg)</span>
+            <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility) }}U</span>
+          </div>
+        </div>
+
+        <!-- 領域 -->
+        <div class="data-row" style="margin-bottom: 12px;">
+          <div class="data-item">
+            <span class="data-label">領域(5Avg10%)</span>
+            <span class="data-value highlight">{{ roundCustom(volatilityStore.averageVolatility * 0.1) }}U</span>
+          </div>
+        </div>
+
+        <!-- 成本佈局 -->
+        <div style="margin-top: 16px; padding: 12px; background-color: rgba(212, 175, 55, 0.05); border-radius: 6px;">
+          <div class="data-label" style="margin-bottom: 12px;">成本佈局</div>
+          <div class="data-row" style="margin-bottom: 8px;">
+            <div class="data-item">
+              <span class="data-label">10%(5Avg10%)</span>
+              <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.1) }}U</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">8%(5Avg8%)</span>
+              <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.08) }}U</span>
+            </div>
+          </div>
+          <div class="data-row" style="margin-bottom: 8px;">
+            <div class="data-item">
+              <span class="data-label">5%(5Avg5%)</span>
+              <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.05) }}U</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">3%(5Avg3%)</span>
+              <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.03) }}U</span>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-item">
+              <span class="data-label">日波幅10% (不超過前項)</span>
+              <span class="data-value">{{ getMinCost() }}U</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 二、保本與反轉 -->
+      <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">二、保本與反轉</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>保本開啟條件: (5Avg10%) > ?</label>
+            <input v-model.number="strategy.breakEvenThreshold" type="number" inputmode="decimal" step="0.1" class="form-input" placeholder="輸入數值U" />
+          </div>
+          <div class="form-group">
+            <label>反轉引線: (5Avg3.5%) > ?</label>
+            <input v-model.number="strategy.reverseThreshold" type="number" inputmode="decimal" step="0.1" class="form-input" placeholder="輸入小點數" />
+          </div>
+        </div>
+        <div style="margin-top: 12px; padding: 12px; background-color: rgba(212, 175, 55, 0.05); border-radius: 6px; font-size: 12px;">
+          <div>保本開啟: {{ volatilityStore.averageVolatility * 0.1 > strategy.breakEvenThreshold ? '✓ 符合條件' : '✗ 不符合' }}</div>
+          <div>反轉引線: {{ roundCustom(volatilityStore.averageVolatility * 0.035) }}小點 > {{ strategy.reverseThreshold }}?</div>
+        </div>
+      </div>
+
+      <!-- 三、關鍵突破口 -->
+      <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">三、關鍵突破口</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>選擇日期 (突破口高點)</label>
+            <select v-model="strategy.highPointDateIndex" class="form-input" @change="updateStrategyData">
+              <option value="" disabled>選擇一天</option>
+              <option v-for="(day, index) in volatilityStore.dailyVolatilities" :key="index" :value="index">
+                {{ formatDateShort(day.date) }}
+              </option>
+            </select>
+          </div>
+          <div class="data-item" style="padding-top: 8px;">
+            <span class="data-label">突破口高點</span>
+            <span class="data-value highlight">{{ strategy.selectedHighPoint.toFixed(2) }}</span>
+          </div>
+        </div>
+        <div class="data-row" style="margin-top: 12px; margin-bottom: 12px;">
+          <div class="data-item">
+            <span class="data-label">止損(高點+1)</span>
+            <span class="data-value highlight">{{ roundCustom(strategy.selectedHighPoint + 1) }}</span>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 12px;">
+          <div class="form-group">
+            <label>選擇日期 (突破口低點)</label>
+            <select v-model="strategy.lowPointDateIndex" class="form-input" @change="updateStrategyData">
+              <option value="" disabled>選擇一天</option>
+              <option v-for="(day, index) in volatilityStore.dailyVolatilities" :key="index" :value="index">
+                {{ formatDateShort(day.date) }}
+              </option>
+            </select>
+          </div>
+          <div class="data-item" style="padding-top: 8px;">
+            <span class="data-label">突破口低點</span>
+            <span class="data-value highlight">{{ strategy.selectedLowPoint.toFixed(2) }}</span>
+          </div>
+        </div>
+        <div class="data-row" style="margin-top: 12px;">
+          <div class="data-item">
+            <span class="data-label">止損(低點-0.5)</span>
+            <span class="data-value highlight">{{ roundCustom(strategy.selectedLowPoint - 0.5) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 四、實盤與細節 -->
+      <div style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">四、實盤與細節</div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>關盤價</label>
+          <input v-model.number="strategy.closingPrice" type="number" inputmode="decimal" step="0.01" class="form-input" placeholder="輸入關盤價" />
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 12px;">
+          <div class="form-group">
+            <label>關盤是否接近突破口</label>
+            <select v-model="strategy.closingNearBreakout" class="form-input">
+              <option value="">選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>是否有特殊盤型</label>
+            <select v-model="strategy.specialPattern" class="form-input">
+              <option value="">選擇</option>
+              <option value="yes">是</option>
+              <option value="no">否</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px; padding: 12px; background-color: rgba(212, 175, 55, 0.05); border-radius: 6px;">
+          <div class="data-label" style="margin-bottom: 12px;">趨勢</div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label style="font-size: 12px;">D1</label>
+              <input v-model="strategy.trendD1" type="text" class="form-input" placeholder="如：上漲、下跌" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px;">H4</label>
+              <input v-model="strategy.trendH4" type="text" class="form-input" placeholder="如：上漲、下跌" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px;">H1</label>
+              <input v-model="strategy.trendH1" type="text" class="form-input" placeholder="如：上漲、下跌" />
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label>區間計算：單日波幅({{ roundCustom(strategy.singleDayVolatility) }}) - 領域×2({{ roundCustom(volatilityStore.averageVolatility * 0.1 * 2) }}) = 中間</label>
+          <input v-model.number="strategy.middleValue" type="number" inputmode="decimal" step="0.01" class="form-input" placeholder="由使用者自行填寫" />
+          <div style="margin-top: 8px; font-size: 12px; color: var(--color-text-tertiary);">
+            計算值: {{ (strategy.singleDayVolatility - (volatilityStore.averageVolatility * 0.1 * 2)).toFixed(2) }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>損益比 (格式: X:X=1:X)</label>
+          <input v-model="strategy.profitRatio" type="text" class="form-input" placeholder="如: 500:500=1:1" />
+        </div>
+      </div>
+
+      <!-- 五、今日模組 -->
+      <div style="padding-top: 16px; border-top: 1px solid var(--color-border);">
+        <div style="font-weight: 600; color: var(--color-text-primary); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border);">五、今日模組</div>
+        <div class="form-group">
+          <label>模組名稱</label>
+          <select v-model="strategy.moduleType" class="form-input">
+            <option value="">選擇模組</option>
+            <option value="B1up">B1上漲</option>
+            <option value="B1down">B1下跌</option>
+            <option value="B2up">B2上漲</option>
+            <option value="B2down">B2下跌</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- 掛單範圍 -->
     <div class="card">
       <div class="card-title">掛單範圍</div>
@@ -282,6 +496,27 @@ const volatilityStore = useVolatilityStore()
 // 單日波幅選擇
 const selectedDayIndex = ref('')
 
+// 策略分析對象
+const strategy = reactive({
+  singleDayIndex: '',
+  singleDayVolatility: 0,
+  highPointDateIndex: '',
+  lowPointDateIndex: '',
+  selectedHighPoint: 0,
+  selectedLowPoint: 0,
+  breakEvenThreshold: 0,
+  reverseThreshold: 0,
+  closingPrice: 0,
+  closingNearBreakout: '',
+  specialPattern: '',
+  trendD1: '',
+  trendH4: '',
+  trendH1: '',
+  middleValue: 0,
+  profitRatio: '',
+  moduleType: ''
+})
+
 const sellLimit = reactive({
   quantity: 0,
   stopLoss: 0,
@@ -298,6 +533,52 @@ const buyLimit = reactive({
   price: 0,
   takeProfit: 0
 })
+
+// 自定義四捨五入函數：超過小數點後5，取整數；否則保留小數點後一位
+const roundCustom = (value: number) => {
+  const decimal = value - Math.floor(value)
+  // 如果小數部分 >= 0.5，則進位到整數
+  if (decimal >= 0.5) {
+    return Math.ceil(value)
+  } else if (decimal === 0) {
+    return value
+  } else {
+    // 否則保留小數點後一位
+    return Math.round(value * 10) / 10
+  }
+}
+
+// 獲取日波幅10%和5Avg10%的最小值
+const getMinCost = () => {
+  const dailyVolatility10 = strategy.singleDayVolatility * 0.1
+  const fiveAvg10 = volatilityStore.averageVolatility * 0.1
+  return roundCustom(Math.min(dailyVolatility10, fiveAvg10))
+}
+
+// 更新策略數據
+const updateStrategyData = () => {
+  if (strategy.singleDayIndex !== '') {
+    const dayIndex = parseInt(strategy.singleDayIndex)
+    if (dayIndex >= 0 && dayIndex < volatilityStore.dailyVolatilities.length) {
+      const day = volatilityStore.dailyVolatilities[dayIndex]
+      strategy.singleDayVolatility = day.highPoint - day.lowPoint
+    }
+  }
+
+  if (strategy.highPointDateIndex !== '') {
+    const dayIndex = parseInt(strategy.highPointDateIndex)
+    if (dayIndex >= 0 && dayIndex < volatilityStore.dailyVolatilities.length) {
+      strategy.selectedHighPoint = volatilityStore.dailyVolatilities[dayIndex].highPoint
+    }
+  }
+
+  if (strategy.lowPointDateIndex !== '') {
+    const dayIndex = parseInt(strategy.lowPointDateIndex)
+    if (dayIndex >= 0 && dayIndex < volatilityStore.dailyVolatilities.length) {
+      strategy.selectedLowPoint = volatilityStore.dailyVolatilities[dayIndex].lowPoint
+    }
+  }
+}
 
 // 計算Sell Limit止損 = 突破口高點 + 1，如果有小數點第二位自動進位到第一位
 const calculateSellLimitStopLoss = () => {
@@ -404,4 +685,15 @@ const getFilteredVolatilities = () => {
 </script>
 
 <style scoped>
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
