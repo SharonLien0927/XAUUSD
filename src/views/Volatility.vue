@@ -221,7 +221,7 @@
         <div class="data-row" style="margin-top: 12px;">
           <div class="data-item">
             <span class="data-label">止損(低點-0.5)</span>
-            <span class="data-value highlight">{{ roundCustom(strategy.selectedLowPoint - 0.5) }}</span>
+            <span class="data-value highlight">{{ calculateLowPointStopLoss(strategy.selectedLowPoint) }}</span>
           </div>
         </div>
       </div>
@@ -548,6 +548,22 @@ const roundCustom = (value: number) => {
   }
 }
 
+// 計算低點止損：低點 - 0.5，應用四捨五入，但至少保持 -0.5 的距離
+const calculateLowPointStopLoss = (lowPoint: number) => {
+  const baseValue = lowPoint - 0.5
+  const roundedValue = roundCustom(baseValue)
+  
+  // 檢查四捨五入後與低點的距離是否至少為 0.5
+  const distance = lowPoint - roundedValue
+  
+  // 如果距離小於 0.5，使用原始值（低點 - 0.5）
+  if (distance < 0.5) {
+    return baseValue
+  }
+  
+  return roundedValue
+}
+
 // 獲取日波幅10%和5Avg10%的最小值
 const getMinCost = () => {
   const dailyVolatility10 = strategy.singleDayVolatility * 0.1
@@ -591,15 +607,9 @@ const calculateSellLimitStopLoss = () => {
   return value
 }
 
-// 計算Buy Limit止損 = 突破口低點 - 0.5，如果有小數點第二位自動進位到第一位
+// 計算Buy Limit止損 = 突破口低點 - 0.5，應用自定義四捨五入，但至少保持 -0.5
 const calculateBuyLimitStopLoss = () => {
-  const value = volatilityStore.breakoutLow - 0.5
-  // 檢查小數點第二位，如果有則進位
-  const decimal = Math.round((value - Math.floor(value)) * 100) / 100
-  if (decimal > 0) {
-    return Math.ceil(value * 10) / 10
-  }
-  return value
+  return calculateLowPointStopLoss(volatilityStore.breakoutLow)
 }
 
 // Sell Limit 計算：價格 = 止損 - 成本
