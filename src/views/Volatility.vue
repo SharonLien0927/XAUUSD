@@ -548,10 +548,11 @@ const roundCustom = (value: number) => {
   }
 }
 
-// 計算低點止損：低點 - 0.5，應用四捨五入，但至少保持 -0.5 的距離
+// 計算低點止損：低點 - 0.5，四捨五入到最近的0.5倍數，但至少保持 -0.5 的距離
 const calculateLowPointStopLoss = (lowPoint: number) => {
   const baseValue = lowPoint - 0.5
-  const roundedValue = roundCustom(baseValue)
+  // 四捨五入到最近的 0.5 倍數：Math.round(value * 2) / 2
+  const roundedValue = Math.round(baseValue * 2) / 2
   
   // 檢查四捨五入後與低點的距離是否至少為 0.5
   const distance = lowPoint - roundedValue
