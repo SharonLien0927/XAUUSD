@@ -304,13 +304,19 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .volatility-row-header {
   display: grid;
-  grid-template-columns: 130px 1fr 1fr;
+  grid-template-columns: 40px 130px 1fr 1fr;
   gap: 8px;
   padding: 8px;
   background-color: var(--color-bg-tertiary);
   border-radius: 8px;
   margin-bottom: 8px;
   box-shadow: var(--shadow-inset);
+}
+
+.vol-header-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .vol-header-date {
@@ -332,7 +338,7 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .volatility-row {
   display: grid;
-  grid-template-columns: 130px 1fr 1fr;
+  grid-template-columns: 40px 130px 1fr 1fr;
   gap: 8px;
   padding: 8px;
   background-color: rgba(26, 31, 38, 0.5);
@@ -347,11 +353,16 @@ input[type="number"]::-webkit-outer-spin-button {
   border-left-color: var(--color-gold);
 }
 
-.vol-item-date {
+.vol-item-checkbox {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
   justify-content: center;
+}
+
+.checkbox-input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
 }
 
 .vol-item-date {
@@ -508,13 +519,13 @@ input[type="number"]::-webkit-outer-spin-button {
 
   /* 手機版波幅行調整 - 針對性優化 */
   .volatility-row-header {
-    grid-template-columns: 90px 1fr 1fr;
+    grid-template-columns: 35px 90px 1fr 1fr;
     gap: 6px;
     padding: 6px;
   }
 
   .volatility-row {
-    grid-template-columns: 90px 1fr 1fr;
+    grid-template-columns: 35px 90px 1fr 1fr;
     gap: 6px;
     padding: 6px;
     margin-bottom: 6px;
@@ -553,7 +564,7 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 
   .data-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
     gap: 8px;
     padding: 10px;
     margin-bottom: 8px;

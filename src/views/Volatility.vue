@@ -6,11 +6,21 @@
       
       <!-- 五天的波幅輸入 -->
       <div class="volatility-row-header">
+        <div class="vol-header-checkbox"></div>
         <div class="vol-header-date">日期</div>
         <div class="vol-header-item">最高點</div>
         <div class="vol-header-item">最低點</div>
       </div>
       <div v-for="(day, index) in getFilteredVolatilities()" :key="index" class="volatility-row">
+        <div class="vol-item-checkbox">
+          <input 
+            :checked="isSelectedIndex(index)"
+            :value="index"
+            type="checkbox"
+            class="checkbox-input"
+            @change="(e: Event) => handleCheckboxChange(index, (e.target as HTMLInputElement).checked)"
+          />
+        </div>
         <div class="vol-item-date">
           <input 
             v-model="day.date"
@@ -130,26 +140,71 @@
         <!-- 成本佈局 -->
         <div style="margin-top: 16px; padding: 12px; background-color: rgba(212, 175, 55, 0.05); border-radius: 6px;">
           <div class="data-label" style="margin-bottom: 12px;">成本佈局</div>
+          
+          <!-- 10% 行 -->
           <div class="data-row" style="margin-bottom: 8px;">
             <div class="data-item">
               <span class="data-label">10%(5Avg10%)</span>
               <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.1) }}U</span>
             </div>
             <div class="data-item">
+              <span class="data-label">空單</span>
+              <span class="data-value">{{ calculateShortLong(0.1).short.toFixed(2) }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">多單</span>
+              <span class="data-value">{{ calculateShortLong(0.1).long.toFixed(2) }}</span>
+            </div>
+          </div>
+          
+          <!-- 8% 行 -->
+          <div class="data-row" style="margin-bottom: 8px;">
+            <div class="data-item">
               <span class="data-label">8%(5Avg8%)</span>
               <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.08) }}U</span>
             </div>
+            <div class="data-item">
+              <span class="data-label">空單</span>
+              <span class="data-value">{{ calculateShortLong(0.08).short.toFixed(2) }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">多單</span>
+              <span class="data-value">{{ calculateShortLong(0.08).long.toFixed(2) }}</span>
+            </div>
           </div>
+          
+          <!-- 5% 行 -->
           <div class="data-row" style="margin-bottom: 8px;">
             <div class="data-item">
               <span class="data-label">5%(5Avg5%)</span>
               <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.05) }}U</span>
             </div>
             <div class="data-item">
+              <span class="data-label">空單</span>
+              <span class="data-value">{{ calculateShortLong(0.05).short.toFixed(2) }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">多單</span>
+              <span class="data-value">{{ calculateShortLong(0.05).long.toFixed(2) }}</span>
+            </div>
+          </div>
+          
+          <!-- 3% 行 -->
+          <div class="data-row" style="margin-bottom: 8px;">
+            <div class="data-item">
               <span class="data-label">3%(5Avg3%)</span>
               <span class="data-value">{{ roundCustom(volatilityStore.averageVolatility * 0.03) }}U</span>
             </div>
+            <div class="data-item">
+              <span class="data-label">空單</span>
+              <span class="data-value">{{ calculateShortLong(0.03).short.toFixed(2) }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">多單</span>
+              <span class="data-value">{{ calculateShortLong(0.03).long.toFixed(2) }}</span>
+            </div>
           </div>
+          
           <div class="data-row">
             <div class="data-item">
               <span class="data-label">日波幅10% (不超過前項)</span>
@@ -496,7 +551,31 @@ const volatilityStore = useVolatilityStore()
 // 單日波幅選擇
 const selectedDayIndex = ref('')
 
-// 策略分析對象
+// 平均波幅行的checkbox選擇 (單選模式)
+const selectedVolatilityIndices = ref<number>(-1)
+
+// 檢查是否為選中的行
+const isSelectedIndex = (index: number) => {
+  return selectedVolatilityIndices.value === index
+}
+
+// 處理checkbox變更事件
+const handleCheckboxChange = (index: number, checked: boolean) => {
+  if (checked) {
+    selectedVolatilityIndices.value = index
+  } else {
+    selectedVolatilityIndices.value = -1
+  }
+}
+
+// 獲取被選中的波幅數據
+const getSelectedVolatilityData = () => {
+  if (selectedVolatilityIndices.value < 0) {
+    return []
+  }
+  const day = volatilityStore.dailyVolatilities[selectedVolatilityIndices.value]
+  return day ? [day] : []
+}
 const strategy = reactive({
   singleDayIndex: '',
   singleDayVolatility: 0,
@@ -570,6 +649,30 @@ const getMinCost = () => {
   const dailyVolatility10 = strategy.singleDayVolatility * 0.1
   const fiveAvg10 = volatilityStore.averageVolatility * 0.1
   return roundCustom(Math.min(dailyVolatility10, fiveAvg10))
+}
+
+// 獲取被選中行的高點和低點
+const getSelectedHighLow = () => {
+  const selectedData = getSelectedVolatilityData()
+  if (selectedData.length > 0) {
+    const day = selectedData[0]
+    return { highPoint: day.highPoint, lowPoint: day.lowPoint }
+  }
+  return { highPoint: 0, lowPoint: 0 }
+}
+
+// 計算空單和多單值
+const calculateShortLong = (percentage: number) => {
+  const { highPoint, lowPoint } = getSelectedHighLow()
+  if (highPoint === 0 && lowPoint === 0) {
+    return { short: 0, long: 0 }
+  }
+  const volatility = highPoint - lowPoint
+  const offset = volatility * percentage
+  return {
+    short: highPoint - offset,
+    long: lowPoint + offset
+  }
 }
 
 // 更新策略數據
